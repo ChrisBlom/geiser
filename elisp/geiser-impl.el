@@ -28,7 +28,7 @@
   :type 'symbol
   :group 'geiser-implementation)
 
-(geiser-custom--defcustom geiser-active-implementations '(guile racket chicken)
+(geiser-custom--defcustom geiser-active-implementations '(guile racket chicken gambit)
   "List of active installed Scheme implementations."
   :type '(repeat symbol)
   :group 'geiser-implementation)
