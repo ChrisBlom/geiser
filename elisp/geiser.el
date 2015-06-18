@@ -92,6 +92,17 @@
   "Connect to a remote Geiser Chicken REPL." t)
 
 ;;;###autoload
+(autoload 'run-gambit "geiser-gambit" "Start a Geiser Gambit REPL." t)
+
+;;;###autoload
+(autoload 'switch-to-gambit "geiser-gambit"
+  "Start a Geiser Gambit REPL, or switch to a running one." t)
+
+;;;###autoload
+(autoload 'connect-to-gambit "geiser-gambit"
+  "Connect to a remote Geiser Gambit REPL." t)
+
+;;;###autoload
 (autoload 'geiser-mode "geiser-mode"
   "Minor mode adding Geiser REPL interaction to Scheme buffers." t)
 
@@ -121,6 +132,7 @@
         geiser-image
         geiser-racket
         geiser-chicken
+	geiser-gambit
         geiser-implementation
         geiser-xref))
 
