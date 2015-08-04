@@ -34,12 +34,14 @@
   :group 'geiser)
 
 (geiser-custom--defcustom geiser-gambit-binary
-  (cond ((eq system-type 'windows-nt) "gsi.exe")
-        ((eq system-type 'darwin) "gsi")
-        (t "gsi"))
+    (cond ((eq system-type 'windows-nt) "gsi.exe")
+	  ((eq system-type 'darwin) "gsi")
+	  (t "gsi"))
   "Name to use to call the Gambit executable when starting a REPL."
   :type '(choice string (repeat string))
   :group 'geiser-gambit)
+
+(setq geiser-gambit-binary "gsi")
 
 (geiser-custom--defcustom geiser-gambit-load-path nil
   "A list of paths to be added to Gambit's load path when it's
@@ -47,7 +49,7 @@ started."
   :type '(repeat file)
   :group 'geiser-gambit)
 
-(geiser-custom--defcustom geiser-gambit-compile-geiser-p t
+(geiser-custom--defcustom geiser-gambit-compile-geiser-p nil ;; TODO set to t
   "Non-nil means that the Geiser runtime will be compiled on load."
   :type 'boolean
   :group 'geiser-gambit)
@@ -77,7 +79,6 @@ this variable to t."
   :type 'boolean
   :group 'geiser-gambit)
 
-
 ;;; REPL support:
 
 (defun geiser-gambit--binary ()
@@ -102,33 +103,40 @@ This function uses `geiser-gambit-init-file' if it exists."
 ; (geiser-gambit--parameters)
 
 (defun geiser-gambit--parameters () '("-:d-"))
-
-; (run-geiser 'gambit)
+(defun geiser-gambit--parameters () '())
 
 (defconst geiser-gambit--prompt-regexp "[0-9]*> ")
+
 
 ;;; Evaluation support:
 
 (defun geiser-gambit--geiser-procedure (proc &rest args)
-  (let ((fmt
-         (case proc
-           ((eval compile)
-            (let ((form (mapconcat 'identity (cdr args) " ")))
-              (format ",geiser-eval %s %s" (or (car args) "#f") form)))
-           ((load-file compile-file)
-            (format ",geiser-load-file %s" (car args)))
-           ((no-values)
-            ",geiser-no-values")
-           (t
-            (let ((form (mapconcat 'identity args " ")))
-              (format "(geiser-%s %s)" proc form))))))
-    ;;(message fmt)
+
+  ;(message "geiser-gambit--geiser-procedure %s" proc args)
+  (let ((fmt (case proc
+	       ((eval compile)
+		;; (let ((form (mapconcat 'identity (cdr args) " ")))
+		;;   (format ",geiser-eval %s %s" (or (car args) "#f") form))
+		(let ((form (mapconcat 'identity (cdr args) " ")))
+		  (format "%s" form)
+		  ;(format "(display (eval (with-input-from-string \"%s\" read)))" form)
+		  )
+		)
+	       ((load-file compile-file)
+		(format "(load \"%s\")" (car args)))
+	       ((no-values) "(values)" ;",geiser-no-values"
+		)
+	       (t
+		(let ((form (mapconcat 'identity args " ")))
+		  (format "(geiser-%s %s)" proc form))))))
+    ;(message "evaling: '%s' '%s' = %s" proc args fmt)
     fmt))
 
 (defconst geiser-gambit--module-re
   "( *module +\\(([^)]+)\\|[^ ]+\\)\\|( *define-library +\\(([^)]+)\\|[^ ]+\\)")
 
 (defun geiser-gambit--get-module (&optional module)
+  ;(message "(geiser-gambit--get-module %s)" module)
   (cond ((null module)
          (save-excursion
            (geiser-syntax--pop-to-top)
@@ -186,6 +194,13 @@ This function uses `geiser-gambit-init-file' if it exists."
   (browse-url (format "http://api.call-cc.org/cdoc?q=%s&query-name=Look+up" id)))
 
 ;;; Keywords and syntax
+;; (for-each (lambda (v)
+;; 	    (if (and (symbol? v) (##global-var? v))
+;; 		(begin
+;; 		 (display v)
+;; 		 (display "\n"))))
+;; 	  (vector->list (##symbol-table)))
+
 
 (defun geiser-gambit--keywords ()
   `((,(format "[[(]%s\\>" (regexp-opt geiser-gambit-builtin-keywords 1)) . 1)))
@@ -261,16 +276,19 @@ This function uses `geiser-gambit-init-file' if it exists."
   (compilation-setup t)
   (let ((geiser-log-verbose-p t)
         (geiser-gambit-load-file (expand-file-name "gambit/geiser/emacs.scm" geiser-scheme-dir)))
-    (if geiser-gambit-compile-geiser-p
-      (geiser-eval--send/wait (format "(use utils)(compile-file \"%s\")(import geiser)"
-                                      geiser-gambit-load-file))
-      (geiser-eval--send/wait (format "(load \"%s\")"
-                                      geiser-gambit-load-file)))))
+    ;; (if geiser-gambit-compile-geiser-p
+    ;; 	(geiser-eval--send/wait (format "(use utils)(compile-file \"%s\")(import geiser)"
+    ;;                                   geiser-gambit-load-file))
+    (let ((res (geiser-eval--send/wait (format "(load \"%s\")"
+					       geiser-gambit-load-file))))
+      ;(message "res geiser-gambit-setup %s" res)
+      res)))
 
 ;;; Implementation definition:
 
+
 (define-geiser-implementation gambit
-  (unsupported-procedures '(callers callees generic-methods))
+  (unsupported-procedures '(callers callees generic-methods find-module))
   (binary geiser-gambit--binary)
   (arglist geiser-gambit--parameters)
   (version-command geiser-gambit--version)
@@ -279,8 +297,9 @@ This function uses `geiser-gambit-init-file' if it exists."
   (prompt-regexp geiser-gambit--prompt-regexp)
   (debugger-prompt-regexp nil)
   (enter-debugger nil)
-  (marshall-procedure geiser-gambit--geiser-procedure)
-  (find-module geiser-gambit--get-module)
+  (marshall-procedure geiser-gambit--geiser-procedure)  ;
+  ;; (find-module nil ;geiser-gambit--get-module
+  ;; 	       )
   (enter-command geiser-gambit--enter-command)
   (exit-command geiser-gambit--exit-command)
   (import-command geiser-gambit--import-command)

@@ -351,7 +351,7 @@ With prefix argument, ask for the lookup symbol (with completion)."
                                      impl))
          (msg (format "Retrieving documentation for %s ..." module))
          (exports (progn
-                    (message "%s" msg)
+                    ;(message "%s" msg)
                     (geiser-doc--get-module-exports module))))
     (if (not exports)
         (message "No information available for %s" module)

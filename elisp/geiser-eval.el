@@ -28,13 +28,17 @@
 (set-default 'geiser-eval--get-module-function nil)
 
 (defvar geiser-eval--get-impl-module nil)
+
 (geiser-impl--register-local-method
- 'geiser-eval--get-impl-module 'find-module '(lambda (&rest) nil)
+ 'geiser-eval--get-impl-module 'find-module '(lambda (&rest ignore) nil)
  "Function used to obtain the module for current buffer. It takes
 an optional argument, for cases where we want to force its
 value.")
 
 (defun geiser-eval--get-module (&optional module)
+  ;; (message "(geiser-eval--get-module %s)" module)
+  ;; (message "geiser-eval--get-module-function = %s" geiser-eval--get-module-function)
+  ;; (message "geiser-eval--get-impl-module = %s" geiser-eval--get-impl-module)
   (if geiser-eval--get-module-function
       (funcall geiser-eval--get-module-function module)
     (funcall geiser-eval--get-impl-module module)))

@@ -146,7 +146,9 @@
   (puthash (geiser-con--request-id r) r (cdr (assoc :completed c))))
 
 (defsubst geiser-con--connection-completed-p (c id)
-  (gethash id (cdr (assoc :completed c))))
+  (let ((x (gethash id (cdr (assoc :completed c)))))
+    (message "geiser-con--connection-completed-p %s" x)
+    x))
 
 (defun geiser-con--connection-inc-count (c)
   (let* ((cnt (assoc :count c))
@@ -253,6 +255,8 @@
   "Time limit, in msecs, blocking on synchronous evaluation requests")
 
 (defun geiser-con--send-string/wait (con str cont &optional timeout sbuf)
+  ;;  (message "(geiser-con--send-string/wait %s %s)" str cont)
+  ;;  (message " - proc %s" (and con (geiser-con--connection-process con)))
   (save-current-buffer
     (let ((proc (and con (geiser-con--connection-process con))))
       (unless proc (error "Geiser connection not active"))

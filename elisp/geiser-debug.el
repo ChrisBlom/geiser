@@ -191,6 +191,8 @@ buffer.")
          (ret (geiser-eval--send/wait code))
          (res (geiser-eval--retort-result-str ret nil))
          (err (geiser-eval--retort-error ret)))
+;    (message "send/wait %s = %s" wrapped code)
+;    (message "send/wait ret = %s, res = '%s', err = '%s' and-go = '%s"  code ret res err and-go)
     (when and-go (funcall and-go))
     (when (not err)
       (save-excursion
